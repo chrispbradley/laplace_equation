@@ -213,7 +213,7 @@ PROGRAM LaplaceEquation
   !Start to create a default (geometric) field on the region
   CALL cmfe_Field_CreateStart(GEOMETRIC_FIELD_USER_NUMBER,contextUserNumber,REGION_USER_NUMBER,err)
   !Set the decomposition to use
-  CALL cmfe_Field_MeshDecompositionSet(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
+  CALL cmfe_Field_DecompositionSet(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
     & MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER,err)
   !Set the domain to be used by the field components.
   CALL cmfe_Field_ComponentMeshComponentSet(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &

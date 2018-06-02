@@ -103,7 +103,7 @@ decomposition.CreateFinish()
 
 geometricField = iron.Field()
 geometricField.CreateStart(geometricFieldUserNumber,region)
-geometricField.meshDecomposition = decomposition
+geometricField.decomposition = decomposition
 geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,1,1)
 geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,2,1)
 geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,3,1)
