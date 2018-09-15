@@ -19,11 +19,12 @@ length = 3.0
     generatedMeshUserNumber,
     meshUserNumber,
     decompositionUserNumber,
+    decomposerUserNumber,
     geometricFieldUserNumber,
     equationsSetFieldUserNumber,
     dependentFieldUserNumber,
     equationsSetUserNumber,
-    problemUserNumber) = range(1,12)
+    problemUserNumber) = range(1,13)
 
 numberGlobalXElements = 1
 numberGlobalYElements = 3
@@ -41,8 +42,11 @@ iron.DiagnosticsSetOn(iron.DiagnosticTypes.IN,[1,2,3,4,5],"Diagnostics",["Laplac
 # Get the computational nodes information
 computationEnvironment = iron.ComputationEnvironment()
 iron.Context.ComputationEnvironmentGet(computationEnvironment)
-numberOfComputationalNodes = computationEnvironment.NumberOfWorldNodesGet()
-computationalNodeNumber = computationEnvironment.WorldNodeNumberGet()
+
+worldWorkGroup = iron.WorkGroup()
+computationEnvironment.WorldWorkGroupGet(worldWorkGroup)
+numberOfComputationalNodes = worldWorkGroup.NumberOfGroupNodesGet()
+computationalNodeNumber = worldWorkGroup.GroupNodeNumberGet()
 
 #-----------------------------------------------------------------------------------------------------------
 #COORDINATE SYSTEM
@@ -93,9 +97,16 @@ generatedMesh.CreateFinish(meshUserNumber,mesh)
 
 decomposition = iron.Decomposition()
 decomposition.CreateStart(decompositionUserNumber,mesh)
-decomposition.type = iron.DecompositionTypes.CALCULATED
-decomposition.numberOfDomains = numberOfComputationalNodes
 decomposition.CreateFinish()
+
+#-----------------------------------------------------------------------------------------------------------
+#DECOMPOSER
+#-----------------------------------------------------------------------------------------------------------
+
+decomposer = iron.Decomposer()
+decomposer.CreateStart(decomposerUserNumber,worldRegion,worldWorkGroup)
+decompositionIndex = decomposer.DecompositionAdd(decomposition)
+decomposer.CreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
 #GEOMETRIC FIELD

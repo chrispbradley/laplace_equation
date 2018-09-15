@@ -21,11 +21,12 @@
 #define GENERATED_MESH_USER_NUMBER 4
 #define MESH_USER_NUMBER 5
 #define DECOMPOSITION_USER_NUMBER 6
-#define GEOMETRIC_FIELD_USER_NUMBER 7
-#define EQUATIONS_SET_USER_NUMBER 8
-#define EQUATIONS_SET_FIELD_USER_NUMBER 9
-#define DEPENDENT_FIELD_USER_NUMBER 10
-#define PROBLEM_USER_NUMBER 11
+#define DECOMPOSER_USER_NUMBER 7
+#define GEOMETRIC_FIELD_USER_NUMBER 8
+#define EQUATIONS_SET_USER_NUMBER 9
+#define EQUATIONS_SET_FIELD_USER_NUMBER 10
+#define DEPENDENT_FIELD_USER_NUMBER 11
+#define PROBLEM_USER_NUMBER 12
 
 #define MAX_COORDINATES 3
 
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
   cmfe_ContextType context=(cmfe_ContextType)NULL;
   cmfe_CoordinateSystemType coordinateSystem=(cmfe_CoordinateSystemType)NULL;
   cmfe_DecompositionType decomposition=(cmfe_DecompositionType)NULL;
+  cmfe_DecomposerType decomposer=(cmfe_DecomposerType)NULL;
   cmfe_EquationsType equations=(cmfe_EquationsType)NULL;
   cmfe_EquationsSetType equationsSet=(cmfe_EquationsSetType)NULL;
   cmfe_FieldsType fields=(cmfe_FieldsType)NULL;
@@ -64,11 +66,12 @@ int main(int argc, char *argv[])
   cmfe_RegionType region=(cmfe_RegionType)NULL,worldRegion=(cmfe_RegionType)NULL;
   cmfe_SolverType solver=(cmfe_SolverType)NULL;
   cmfe_SolverEquationsType solverEquations=(cmfe_SolverEquationsType)NULL;
+  cmfe_WorkGroupType worldWorkGroup=(cmfe_WorkGroupType)NULL;
 
   int numberOfGlobalXElements,numberOfGlobalYElements,numberOfGlobalZElements,interpolationType;
   
   int numberOfComputationalNodes,computationalNodeNumber;
-  int equationsSetIndex;
+  int decompositionIndex,equationsSetIndex;
   int firstNodeNumber,lastNodeNumber;
   int firstNodeDomain,lastNodeDomain;
 
@@ -120,8 +123,11 @@ int main(int argc, char *argv[])
   /* Get the computational nodes information */
   err = cmfe_ComputationEnvironment_Initialise(&computationEnvironment);
   err = cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment);
-  err = cmfe_ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,&numberOfComputationalNodes);
-  err = cmfe_ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,&computationalNodeNumber);
+
+  err = cmfe_WorkGroup_Initialise(&worldWorkGroup);
+  err = cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup);
+  err = cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,&numberOfComputationalNodes);
+  err = cmfe_WorkGroup_GroupNodeNumberGet(workWorkGroup,&computationalNodeNumber);
 
   /* Start the creation of a new RC coordinate system */
   err = cmfe_CoordinateSystem_Initialise(&coordinateSystem);
@@ -227,11 +233,16 @@ int main(int argc, char *argv[])
   /* Create a decomposition */
   err = cmfe_Decomposition_Initialise(&decomposition);
   err = cmfe_Decomposition_CreateStart(DECOMPOSITION_USER_NUMBER,mesh,decomposition);
-  /* Set the decomposition to be a general decomposition with the specified number of domains */
-  err = cmfe_Decomposition_TypeSet(decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE);
-  err = cmfe_Decomposition_NumberOfDomainsSet(decomposition,numberOfComputationalNodes);
   /* Finish the decomposition */
   err = cmfe_Decomposition_CreateFinish(decomposition);
+
+  /* Decompose */
+  err = cmfe_Decomposer_Initialise(&decomposer);
+  err = cmfe_Decomposer_CreateStart(DECOMPOSER_USER_NUMBER,region,worldWorkGroup,decomposition);
+  /* Add in the decomposition */
+  err = cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex);
+  /* Finish the decomposer */
+  err = cmfe_Decomposer_CreateFinish(decomposer);
 
   /* Start to create a default (geometric) field on the region */
   err = cmfe_Field_Initialise(&geometricField);

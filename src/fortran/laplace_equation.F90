@@ -20,11 +20,12 @@ PROGRAM LaplaceEquation
   INTEGER(CMISSIntg), PARAMETER :: GENERATED_MESH_USER_NUMBER=4
   INTEGER(CMISSIntg), PARAMETER :: MESH_USER_NUMBER=5
   INTEGER(CMISSIntg), PARAMETER :: DECOMPOSITION_USER_NUMBER=6
-  INTEGER(CMISSIntg), PARAMETER :: GEOMETRIC_FIELD_USER_NUMBER=7
-  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_FIELD_USER_NUMBER=8
-  INTEGER(CMISSIntg), PARAMETER :: DEPENDENT_FIELD_USER_NUMBER=9
-  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_USER_NUMBER=10
-  INTEGER(CMISSIntg), PARAMETER :: PROBLEM_USER_NUMBER=11
+  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSER_USER_NUMBER=7
+  INTEGER(CMISSIntg), PARAMETER :: GEOMETRIC_FIELD_USER_NUMBER=8
+  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_FIELD_USER_NUMBER=9
+  INTEGER(CMISSIntg), PARAMETER :: DEPENDENT_FIELD_USER_NUMBER=10
+  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_USER_NUMBER=11
+  INTEGER(CMISSIntg), PARAMETER :: PROBLEM_USER_NUMBER=12
 
   !Program types
 
@@ -41,6 +42,7 @@ PROGRAM LaplaceEquation
   TYPE(cmfe_ContextType) :: context
   TYPE(cmfe_CoordinateSystemType) :: coordinateSystem
   TYPE(cmfe_DecompositionType) :: decomposition
+  TYPE(cmfe_DecomposerType) :: decomposer
   TYPE(cmfe_EquationsType) :: equations
   TYPE(cmfe_EquationsSetType) :: equationsSet
   TYPE(cmfe_FieldType) :: geometricField,equationsSetField,dependentField
@@ -52,10 +54,11 @@ PROGRAM LaplaceEquation
   TYPE(cmfe_RegionType) :: region,worldRegion
   TYPE(cmfe_SolverType) :: solver
   TYPE(cmfe_SolverEquationsType) :: solverEquations
+  TYPE(cmfe_WorkGroupType) :: worldWorkGroup
 
   !Generic CMISS variables
   INTEGER(CMISSIntg) :: numberOfComputationalNodes,computationalNodeNumber
-  INTEGER(CMISSIntg) :: equationsSetIndex
+  INTEGER(CMISSIntg) :: decompositionIndex,equationsSetIndex
   INTEGER(CMISSIntg) :: firstNodeNumber,lastNodeNumber
   INTEGER(CMISSIntg) :: firstNodeDomain,lastNodeDomain
   INTEGER(CMISSIntg) :: err
@@ -111,8 +114,11 @@ PROGRAM LaplaceEquation
   !Get the computational nodes information
   CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
   CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
-  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfComputationalNodes,err)
-  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationalNodeNumber,err)
+  
+  CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+  CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+  CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! COORDINATE SYSTEM
@@ -215,12 +221,17 @@ PROGRAM LaplaceEquation
   !Create a decomposition
   CALL cmfe_Decomposition_Initialise(decomposition,err)
   CALL cmfe_Decomposition_CreateStart(DECOMPOSITION_USER_NUMBER,mesh,decomposition,err)
-  !Set the decomposition to be a general decomposition with the specified number of domains
-  CALL cmfe_Decomposition_TypeSet(decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,err)
-  CALL cmfe_Decomposition_NumberOfDomainsSet(decomposition,numberOfComputationalNodes,err)
   !Finish the decomposition
   CALL cmfe_Decomposition_CreateFinish(decomposition,err)
 
+  !Decompose
+  CALL cmfe_Decomposer_Initialise(decomposer,err)
+  CALL cmfe_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
+  !Add in the decomposition
+  CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+  !Finish the decomposer
+  CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+  
   !Destory the mesh now that we have decomposed it
   !CALL cmfe_Mesh_Destroy(mesh,err)
 
