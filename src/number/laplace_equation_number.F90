@@ -92,8 +92,8 @@ PROGRAM LaplaceEquation
   CALL cmfe_OutputSetOn(filename,err)
 
   !Get the computational nodes information
-  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(contextUserNumber,0,numberOfComputationNodes,err)
-  CALL cmfe_WorkGroup_GroupNodeNumberGet(contextUserNumber,0,computationNodeNumber,err)
+  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(contextUserNumber,0,numberOfComputationalNodes,err)
+  CALL cmfe_WorkGroup_GroupNodeNumberGet(contextUserNumber,0,computationalNodeNumber,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! COORDINATE SYSTEM
@@ -203,8 +203,6 @@ PROGRAM LaplaceEquation
 ! Set the decomposition to be a general decomposition with the specified number of domains
   CALL cmfe_Decomposition_TypeSet(contextUserNumber,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
     & CMFE_DECOMPOSITION_CALCULATED_TYPE,err)
-  CALL cmfe_Decomposition_NumberOfDomainsSet(contextUserNumber,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
-    & numberOfComputationalNodes,err)
   !Finish the decomposition
   CALL cmfe_Decomposition_CreateFinish(contextUserNumber,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER,err)
 

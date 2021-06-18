@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
   err = cmfe_WorkGroup_Initialise(&worldWorkGroup);
   err = cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup);
   err = cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,&numberOfComputationalNodes);
-  err = cmfe_WorkGroup_GroupNodeNumberGet(workWorkGroup,&computationalNodeNumber);
+  err = cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,&computationalNodeNumber);
 
   /* Start the creation of a new RC coordinate system */
   err = cmfe_CoordinateSystem_Initialise(&coordinateSystem);
@@ -238,9 +238,9 @@ int main(int argc, char *argv[])
 
   /* Decompose */
   err = cmfe_Decomposer_Initialise(&decomposer);
-  err = cmfe_Decomposer_CreateStart(DECOMPOSER_USER_NUMBER,region,worldWorkGroup,decomposition);
+  err = cmfe_Decomposer_CreateStart(DECOMPOSER_USER_NUMBER,region,worldWorkGroup,decomposer);
   /* Add in the decomposition */
-  err = cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex);
+  err = cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,&decompositionIndex);
   /* Finish the decomposer */
   err = cmfe_Decomposer_CreateFinish(decomposer);
 

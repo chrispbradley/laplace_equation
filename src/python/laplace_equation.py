@@ -10,8 +10,8 @@ from opencmiss.iron import iron
 #-----------------------------------------------------------------------------------------------------------
 
 height = 1.0
-width = 2.0
-length = 3.0
+width = 1.0
+length = 1.0
 
 (coordinateSystemUserNumber,
     regionUserNumber,
@@ -158,6 +158,8 @@ equations = iron.Equations()
 equationsSet.EquationsCreateStart(equations)
 equations.sparsityType = iron.EquationsSparsityTypes.SPARSE
 equations.outputType = iron.EquationsOutputTypes.NONE
+equations.outputType = iron.EquationsOutputTypes.MATRIX
+equations.outputType = iron.EquationsOutputTypes.ELEMENT_MATRIX
 equationsSet.EquationsCreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
@@ -184,6 +186,7 @@ solver = iron.Solver()
 problem.SolversCreateStart()
 problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,solver)
 solver.outputType = iron.SolverOutputTypes.SOLVER
+solver.outputType = iron.SolverOutputTypes.MATRIX
 solver.linearType = iron.LinearSolverTypes.ITERATIVE
 solver.linearIterativeAbsoluteTolerance = 1.0E-12
 solver.linearIterativeRelativeTolerance = 1.0E-12
