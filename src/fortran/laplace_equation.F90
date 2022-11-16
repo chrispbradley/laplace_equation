@@ -10,22 +10,25 @@ PROGRAM LaplaceEquation
   !-----------------------------------------------------------------------------------------------------------
 
   !Test program parameters
-  REAL(CMISSRP), PARAMETER :: HEIGHT=1.0_CMISSRP
-  REAL(CMISSRP), PARAMETER :: WIDTH=2.0_CMISSRP
+  !REAL(CMISSRP), PARAMETER :: HEIGHT=1.0_CMISSRP
+  !REAL(CMISSRP), PARAMETER :: WIDTH=2.0_CMISSRP
+  REAL(CMISSRP), PARAMETER :: HEIGHT=0.5_CMISSRP
+  REAL(CMISSRP), PARAMETER :: WIDTH=0.5_CMISSRP
   REAL(CMISSRP), PARAMETER :: LENGTH=3.0_CMISSRP
  
-  INTEGER(CMISSIntg), PARAMETER :: COORDINATE_SYSTEM_USER_NUMBER=1
-  INTEGER(CMISSIntg), PARAMETER :: REGION_USER_NUMBER=2
-  INTEGER(CMISSIntg), PARAMETER :: BASIS_USER_NUMBER=3
-  INTEGER(CMISSIntg), PARAMETER :: GENERATED_MESH_USER_NUMBER=4
-  INTEGER(CMISSIntg), PARAMETER :: MESH_USER_NUMBER=5
-  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSITION_USER_NUMBER=6
-  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSER_USER_NUMBER=7
-  INTEGER(CMISSIntg), PARAMETER :: GEOMETRIC_FIELD_USER_NUMBER=8
-  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_FIELD_USER_NUMBER=9
-  INTEGER(CMISSIntg), PARAMETER :: DEPENDENT_FIELD_USER_NUMBER=10
-  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_USER_NUMBER=11
-  INTEGER(CMISSIntg), PARAMETER :: PROBLEM_USER_NUMBER=12
+  INTEGER(CMISSIntg), PARAMETER :: CONTEXT_USER_NUMBER=1
+  INTEGER(CMISSIntg), PARAMETER :: COORDINATE_SYSTEM_USER_NUMBER=2
+  INTEGER(CMISSIntg), PARAMETER :: REGION_USER_NUMBER=3
+  INTEGER(CMISSIntg), PARAMETER :: BASIS_USER_NUMBER=4
+  INTEGER(CMISSIntg), PARAMETER :: GENERATED_MESH_USER_NUMBER=5
+  INTEGER(CMISSIntg), PARAMETER :: MESH_USER_NUMBER=6
+  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSITION_USER_NUMBER=7
+  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSER_USER_NUMBER=8
+  INTEGER(CMISSIntg), PARAMETER :: GEOMETRIC_FIELD_USER_NUMBER=9
+  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_FIELD_USER_NUMBER=10
+  INTEGER(CMISSIntg), PARAMETER :: DEPENDENT_FIELD_USER_NUMBER=11
+  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_USER_NUMBER=12
+  INTEGER(CMISSIntg), PARAMETER :: PROBLEM_USER_NUMBER=13
 
   !Program types
 
@@ -98,18 +101,18 @@ PROGRAM LaplaceEquation
   ENDIF
 
   !Intialise OpenCMISS
-  CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,err)
+  CALL cmfe_Initialise(err)
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
+  !CALL cmfe_DiagnosticsSetOn(CMFE_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate"],err)
+  WRITE(filename,'(A,"_",I0,"x",I0,"x",I0,"_",I0)') "Laplace",numberOfGlobalXElements,numberOfGlobalYElements, &
+    & numberOfGlobalZElements,interpolationType
+  CALL cmfe_OutputSetOn(filename,err)
+  !Create a context
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Context_Create(CONTEXT_USER_NUMBER,context,err)
   CALL cmfe_Region_Initialise(worldRegion,err)
   CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
   CALL cmfe_Context_RandomSeedsSet(context,9999,err)
-  !CALL cmfe_DiagnosticsSetOn(CMFE_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate"],err)
-
-  WRITE(filename,'(A,"_",I0,"x",I0,"x",I0,"_",I0)') "Laplace",numberOfGlobalXElements,numberOfGlobalYElements, &
-    & numberOfGlobalZElements,interpolationType
-
-  CALL cmfe_OutputSetOn(filename,err)
 
   !Get the computational nodes information
   CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
@@ -294,8 +297,8 @@ PROGRAM LaplaceEquation
   CALL cmfe_Equations_Initialise(equations,err)
   CALL cmfe_EquationsSet_EquationsCreateStart(equationsSet,equations,err)
   !Set the equations matrices sparsity type
-  CALL cmfe_Equations_SparsityTypeSet(equations,CMFE_EQUATIONS_SPARSE_MATRICES,err)
-  !CALL cmfe_Equations_SparsityTypeSet(equations,CMFE_EQUATIONS_FULL_MATRICES,err)
+  !CALL cmfe_Equations_SparsityTypeSet(equations,CMFE_EQUATIONS_SPARSE_MATRICES,err)
+  CALL cmfe_Equations_SparsityTypeSet(equations,CMFE_EQUATIONS_FULL_MATRICES,err)
   !Set the equations set output
   !CALL cmfe_Equations_OutputTypeSet(equations,CMFE_EQUATIONS_NO_OUTPUT,err)
   !CALL cmfe_Equations_OutputTypeSet(equations,CMFE_EQUATIONS_TIMING_OUTPUT,err)
@@ -359,8 +362,8 @@ PROGRAM LaplaceEquation
   CALL cmfe_Problem_SolverGet(problem,CMFE_CONTROL_LOOP_NODE,1,solver,err)
   CALL cmfe_Solver_SolverEquationsGet(solver,solverEquations,err)
   !Set the solver equations sparsity
-  CALL cmfe_SolverEquations_SparsityTypeSet(solverEquations,CMFE_SOLVER_SPARSE_MATRICES,err)
-  !CALL cmfe_SolverEquations_SparsityTypeSet(solverEquations,CMFE_SOLVER_FULL_MATRICES,err)
+  !CALL cmfe_SolverEquations_SparsityTypeSet(solverEquations,CMFE_SOLVER_SPARSE_MATRICES,err)
+  CALL cmfe_SolverEquations_SparsityTypeSet(solverEquations,CMFE_SOLVER_FULL_MATRICES,err)
   !Add in the equations set
   CALL cmfe_SolverEquations_EquationsSetAdd(solverEquations,equationsSet,equationsSetIndex,err)
   !Finish the creation of the problem solver equations
@@ -409,9 +412,12 @@ PROGRAM LaplaceEquation
   CALL cmfe_Fields_ElementsExport(fields,"LaplaceEquation","FORTRAN",err)
   CALL cmfe_Fields_Finalise(fields,err)
 
+  !Destroy the context
+  CALL cmfe_Context_Destroy(context,err)
   !Finialise OpenCMISS
-  CALL cmfe_Finalise(context,err)
-  WRITE(*,'(A)') "Program successfully completed."
+  CALL cmfe_Finalise(err)
+  
+  WRITE(*,'("Program successfully completed.")')
   STOP
 
 CONTAINS
@@ -423,3 +429,4 @@ CONTAINS
   END SUBROUTINE HandleError
 
 END PROGRAM LaplaceEquation
+

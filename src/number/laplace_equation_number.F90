@@ -14,18 +14,19 @@ PROGRAM LaplaceEquation
   REAL(CMISSRP), PARAMETER :: WIDTH=2.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: LENGTH=3.0_CMISSRP
  
-  INTEGER(CMISSIntg), PARAMETER :: COORDINATE_SYSTEM_USER_NUMBER=1
-  INTEGER(CMISSIntg), PARAMETER :: REGION_USER_NUMBER=2
-  INTEGER(CMISSIntg), PARAMETER :: BASIS_USER_NUMBER=3
-  INTEGER(CMISSIntg), PARAMETER :: GENERATED_MESH_USER_NUMBER=4
-  INTEGER(CMISSIntg), PARAMETER :: MESH_USER_NUMBER=5
-  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSITION_USER_NUMBER=6
-  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSER_USER_NUMBER=7
-  INTEGER(CMISSIntg), PARAMETER :: GEOMETRIC_FIELD_USER_NUMBER=8
-  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_FIELD_USER_NUMBER=9
-  INTEGER(CMISSIntg), PARAMETER :: DEPENDENT_FIELD_USER_NUMBER=10
-  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_USER_NUMBER=11
-  INTEGER(CMISSIntg), PARAMETER :: PROBLEM_USER_NUMBER=12
+  INTEGER(CMISSIntg), PARAMETER :: CONTEXT_USER_NUMBER=1
+  INTEGER(CMISSIntg), PARAMETER :: COORDINATE_SYSTEM_USER_NUMBER=2
+  INTEGER(CMISSIntg), PARAMETER :: REGION_USER_NUMBER=3
+  INTEGER(CMISSIntg), PARAMETER :: BASIS_USER_NUMBER=4
+  INTEGER(CMISSIntg), PARAMETER :: GENERATED_MESH_USER_NUMBER=5
+  INTEGER(CMISSIntg), PARAMETER :: MESH_USER_NUMBER=6
+  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSITION_USER_NUMBER=7
+  INTEGER(CMISSIntg), PARAMETER :: DECOMPOSER_USER_NUMBER=8
+  INTEGER(CMISSIntg), PARAMETER :: GEOMETRIC_FIELD_USER_NUMBER=9
+  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_FIELD_USER_NUMBER=10
+  INTEGER(CMISSIntg), PARAMETER :: DEPENDENT_FIELD_USER_NUMBER=11
+  INTEGER(CMISSIntg), PARAMETER :: EQUATIONS_SET_USER_NUMBER=12
+  INTEGER(CMISSIntg), PARAMETER :: PROBLEM_USER_NUMBER=13
 
   !Program types
 
@@ -38,7 +39,7 @@ PROGRAM LaplaceEquation
   !CMISS variables
 
   !Generic CMISS variables
-  INTEGER(CMISSIntg) :: contextUserNumber,worldRegionUserNumber
+  INTEGER(CMISSIntg) :: worldRegionUserNumber
   INTEGER(CMISSIntg) :: numberOfComputationalNodes,computationalNodeNumber
   INTEGER(CMISSIntg) :: decompositionIndex,equationsSetIndex
   INTEGER(CMISSIntg) :: firstNodeNumber,lastNodeNumber
@@ -80,61 +81,61 @@ PROGRAM LaplaceEquation
   ENDIF
 
   !Intialise OpenCMISS
-  CALL cmfe_Initialise(contextUserNumber,err)
+  CALL cmfe_Initialise(err)
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
-  CALL cmfe_Context_WorldRegionGet(contextUserNumber,worldRegionUserNumber,err)
-  CALL cmfe_Context_RandomSeedsSet(contextUserNumber,9999,err)
   !CALL cmfe_DiagnosticsSetOn(CMFE_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate"],err)
-
   WRITE(filename,'(A,"_",I0,"x",I0,"x",I0,"_",I0)') "Laplace",numberOfGlobalXElements,numberOfGlobalYElements, &
     & numberOfGlobalZElements,interpolationType
-
   CALL cmfe_OutputSetOn(filename,err)
+  !Create a context
+  CALL cmfe_Context_Create(CONTEXT_USER_NUMBER,err)
+  CALL cmfe_Context_WorldRegionGet(CONTEXT_USER_NUMBER,worldRegionUserNumber,err)
+  CALL cmfe_Context_RandomSeedsSet(CONTEXT_USER_NUMBER,9999,err)
 
   !Get the computational nodes information
-  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(contextUserNumber,0,numberOfComputationalNodes,err)
-  CALL cmfe_WorkGroup_GroupNodeNumberGet(contextUserNumber,0,computationalNodeNumber,err)
+  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(CONTEXT_USER_NUMBER,0,numberOfComputationalNodes,err)
+  CALL cmfe_WorkGroup_GroupNodeNumberGet(CONTEXT_USER_NUMBER,0,computationalNodeNumber,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! COORDINATE SYSTEM
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a new RC coordinate system
-  CALL cmfe_CoordinateSystem_CreateStart(COORDINATE_SYSTEM_USER_NUMBER,contextUserNumber,err)
+  CALL cmfe_CoordinateSystem_CreateStart(COORDINATE_SYSTEM_USER_NUMBER,CONTEXT_USER_NUMBER,err)
   IF(numberOfGlobalZElements==0) THEN
     !Set the coordinate system to be 2D
-    CALL cmfe_CoordinateSystem_DimensionSet(contextUserNumber,COORDINATE_SYSTEM_USER_NUMBER,2,err)
+    CALL cmfe_CoordinateSystem_DimensionSet(CONTEXT_USER_NUMBER,COORDINATE_SYSTEM_USER_NUMBER,2,err)
   ELSE
     !Set the coordinate system to be 3D
-    CALL cmfe_CoordinateSystem_DimensionSet(contextUserNumber,COORDINATE_SYSTEM_USER_NUMBER,3,err)
+    CALL cmfe_CoordinateSystem_DimensionSet(CONTEXT_USER_NUMBER,COORDINATE_SYSTEM_USER_NUMBER,3,err)
   ENDIF
   !Finish the creation of the coordinate system
-  CALL cmfe_CoordinateSystem_CreateFinish(contextUserNumber,COORDINATE_SYSTEM_USER_NUMBER,err)
+  CALL cmfe_CoordinateSystem_CreateFinish(CONTEXT_USER_NUMBER,COORDINATE_SYSTEM_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! REGION
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of the region
-  CALL cmfe_Region_CreateStart(REGION_USER_NUMBER,contextUserNumber,worldRegionUserNumber,err)
+  CALL cmfe_Region_CreateStart(REGION_USER_NUMBER,CONTEXT_USER_NUMBER,worldRegionUserNumber,err)
   !Set the regions coordinate system to the 2D RC coordinate system that we have created
-  CALL cmfe_Region_CoordinateSystemSet(contextUserNumber,REGION_USER_NUMBER,COORDINATE_SYSTEM_USER_NUMBER,err)
+  CALL cmfe_Region_CoordinateSystemSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,COORDINATE_SYSTEM_USER_NUMBER,err)
   !Set the region label
-  CALL cmfe_Region_LabelSet(contextUserNumber,REGION_USER_NUMBER,"LaplaceEquation",err)
+  CALL cmfe_Region_LabelSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,"LaplaceEquation",err)
   !Finish the creation of the region
-  CALL cmfe_Region_CreateFinish(contextUserNumber,REGION_USER_NUMBER,err)
+  CALL cmfe_Region_CreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! BASIS
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a basis (default is trilinear lagrange)
-  CALL cmfe_Basis_CreateStart(BASIS_USER_NUMBER,contextUserNumber,err)
+  CALL cmfe_Basis_CreateStart(BASIS_USER_NUMBER,CONTEXT_USER_NUMBER,err)
   SELECT CASE(interpolationType)
   CASE(1,2,3,4)
-    CALL cmfe_Basis_TypeSet(contextUserNumber,BASIS_USER_NUMBER,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,err)
+    CALL cmfe_Basis_TypeSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,err)
   CASE(7,8,9)
-    CALL cmfe_Basis_TypeSet(contextUserNumber,BASIS_USER_NUMBER,CMFE_BASIS_SIMPLEX_TYPE,err)
+    CALL cmfe_Basis_TypeSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER,CMFE_BASIS_SIMPLEX_TYPE,err)
   CASE DEFAULT
     CALL HandleError("Invalid interpolation type.")
   END SELECT
@@ -150,61 +151,61 @@ PROGRAM LaplaceEquation
   END SELECT
   IF(numberOfGlobalZElements==0) THEN
     !Set the basis to be a bi-interpolation basis
-    CALL cmfe_Basis_NumberOfXiSet(contextUserNumber,BASIS_USER_NUMBER,2,err)
-    CALL cmfe_Basis_InterpolationXiSet(contextUserNumber,BASIS_USER_NUMBER,[interpolationType,interpolationType],err)
+    CALL cmfe_Basis_NumberOfXiSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER,2,err)
+    CALL cmfe_Basis_InterpolationXiSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER,[interpolationType,interpolationType],err)
     IF(numberOfGaussXi>0) THEN
-      CALL cmfe_Basis_QuadratureNumberOfGaussXiSet(contextUserNumber,BASIS_USER_NUMBER, &
+      CALL cmfe_Basis_QuadratureNumberOfGaussXiSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER, &
         & [numberOfGaussXi,numberOfGaussXi],err)
     ENDIF
   ELSE
     !Set the basis to be a tri-interpolation basis
-    CALL cmfe_Basis_NumberOfXiSet(contextUserNumber,BASIS_USER_NUMBER,3,err)
-    CALL cmfe_Basis_InterpolationXiSet(contextUserNumber,BASIS_USER_NUMBER, &
+    CALL cmfe_Basis_NumberOfXiSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER,3,err)
+    CALL cmfe_Basis_InterpolationXiSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER, &
       & [interpolationType,interpolationType,interpolationType],err)
     IF(numberOfGaussXi>0) THEN
-      CALL cmfe_Basis_QuadratureNumberOfGaussXiSet(contextUserNumber,BASIS_USER_NUMBER, &
+      CALL cmfe_Basis_QuadratureNumberOfGaussXiSet(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER, &
         & [numberOfGaussXi,numberOfGaussXi,numberOfGaussXi],err)
     ENDIF
   ENDIF
   !Finish the creation of the basis
-  CALL cmfe_Basis_CreateFinish(contextUserNumber,BASIS_USER_NUMBER,err)
+  CALL cmfe_Basis_CreateFinish(CONTEXT_USER_NUMBER,BASIS_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! MESH
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a generated mesh in the region
-  CALL cmfe_GeneratedMesh_CreateStart(GENERATED_MESH_USER_NUMBER,contextUserNumber,REGION_USER_NUMBER,err)
+  CALL cmfe_GeneratedMesh_CreateStart(GENERATED_MESH_USER_NUMBER,CONTEXT_USER_NUMBER,REGION_USER_NUMBER,err)
   !Set up a regular x*y*z mesh
-  CALL cmfe_GeneratedMesh_TypeSet(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
+  CALL cmfe_GeneratedMesh_TypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
     & CMFE_GENERATED_MESH_REGULAR_MESH_TYPE,err)
   !Set the default basis
-  CALL cmfe_GeneratedMesh_BasisSet(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,BASIS_USER_NUMBER,err)
+  CALL cmfe_GeneratedMesh_BasisSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,BASIS_USER_NUMBER,err)
   !Define the mesh on the region
   IF(numberOfGlobalZElements==0) THEN
-    CALL cmfe_GeneratedMesh_ExtentSet(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,[WIDTH,HEIGHT],err)
-    CALL cmfe_GeneratedMesh_NumberOfElementsSet(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
+    CALL cmfe_GeneratedMesh_ExtentSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,[WIDTH,HEIGHT],err)
+    CALL cmfe_GeneratedMesh_NumberOfElementsSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
       & [numberOfGlobalXElements,numberOfGlobalYElements],err)
   ELSE
-    CALL cmfe_GeneratedMesh_ExtentSet(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,[WIDTH,HEIGHT,LENGTH],err)
-    CALL cmfe_GeneratedMesh_NumberOfElementsSet(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
+    CALL cmfe_GeneratedMesh_ExtentSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,[WIDTH,HEIGHT,LENGTH],err)
+    CALL cmfe_GeneratedMesh_NumberOfElementsSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
       & [numberOfGlobalXElements,numberOfGlobalYElements,numberOfGlobalZElements],err)
   ENDIF
   !Finish the creation of a generated mesh in the region
-  CALL cmfe_GeneratedMesh_CreateFinish(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,MESH_USER_NUMBER,err)
+  CALL cmfe_GeneratedMesh_CreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER,MESH_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! DECOMPOSiTION
   !-----------------------------------------------------------------------------------------------------------
 
   !Create a decomposition
-  CALL cmfe_Decomposition_CreateStart(DECOMPOSITION_USER_NUMBER,contextUserNumber,REGION_USER_NUMBER, &
+  CALL cmfe_Decomposition_CreateStart(DECOMPOSITION_USER_NUMBER,CONTEXT_USER_NUMBER,REGION_USER_NUMBER, &
     & MESH_USER_NUMBER,err)
 ! Set the decomposition to be a general decomposition with the specified number of domains
-  CALL cmfe_Decomposition_TypeSet(contextUserNumber,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
+  CALL cmfe_Decomposition_TypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
     & CMFE_DECOMPOSITION_CALCULATED_TYPE,err)
   !Finish the decomposition
-  CALL cmfe_Decomposition_CreateFinish(contextUserNumber,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER,err)
+  CALL cmfe_Decomposition_CreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER,err)
 
 
   !-----------------------------------------------------------------------------------------------------------
@@ -212,12 +213,12 @@ PROGRAM LaplaceEquation
   !-----------------------------------------------------------------------------------------------------------
   
   !Decompose
-  CALL cmfe_Decomposer_CreateStart(DECOMPOSER_USER_NUMBER,contextUserNumber,REGION_USER_NUMBER,0,err)
+  CALL cmfe_Decomposer_CreateStart(DECOMPOSER_USER_NUMBER,CONTEXT_USER_NUMBER,REGION_USER_NUMBER,0,err)
   !Add in the decomposition
-  CALL cmfe_Decomposer_DecompositionAdd(contextUserNumber,REGION_USER_NUMBER,DECOMPOSER_USER_NUMBER,MESH_USER_NUMBER, &
+  CALL cmfe_Decomposer_DecompositionAdd(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,DECOMPOSER_USER_NUMBER,MESH_USER_NUMBER, &
     & DECOMPOSITION_USER_NUMBER,decompositionIndex,err)
   !Finish the decomposer
-  CALL cmfe_Decomposer_CreateFinish(contextUserNumber,REGION_USER_NUMBER,DECOMPOSER_USER_NUMBER,err)
+  CALL cmfe_Decomposer_CreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,DECOMPOSER_USER_NUMBER,err)
   
   !Destory the mesh now that we have decomposed it
 ! CALL cmfe_Mesh_Destroy(mesh,err)
@@ -227,24 +228,24 @@ PROGRAM LaplaceEquation
   !-----------------------------------------------------------------------------------------------------------
 
   !Start to create a default (geometric) field on the region
-  CALL cmfe_Field_CreateStart(GEOMETRIC_FIELD_USER_NUMBER,contextUserNumber,REGION_USER_NUMBER,err)
+  CALL cmfe_Field_CreateStart(GEOMETRIC_FIELD_USER_NUMBER,CONTEXT_USER_NUMBER,REGION_USER_NUMBER,err)
   !Set the decomposition to use
-  CALL cmfe_Field_DecompositionSet(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
+  CALL cmfe_Field_DecompositionSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
     & MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER,err)
   !Set the domain to be used by the field components.
-  CALL cmfe_Field_ComponentMeshComponentSet(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
+  CALL cmfe_Field_ComponentMeshComponentSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
     & CMFE_FIELD_U_VARIABLE_TYPE,1,1,err)
-  CALL cmfe_Field_ComponentMeshComponentSet(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
+  CALL cmfe_Field_ComponentMeshComponentSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
     & CMFE_FIELD_U_VARIABLE_TYPE,2,1,err)
   IF(numberOfGlobalZElements/=0) THEN
-    CALL cmfe_Field_ComponentMeshComponentSet(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
+    CALL cmfe_Field_ComponentMeshComponentSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
       & CMFE_FIELD_U_VARIABLE_TYPE,3,1,err)
   ENDIF
   !Finish creating the field
-  CALL cmfe_Field_CreateFinish(contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER,err)
+  CALL cmfe_Field_CreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER,err)
 
   !Update the geometric field parameters
-  CALL cmfe_GeneratedMesh_GeometricParametersCalculate(contextUserNumber,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
+  CALL cmfe_GeneratedMesh_GeometricParametersCalculate(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GENERATED_MESH_USER_NUMBER, &
     & GEOMETRIC_FIELD_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
@@ -252,29 +253,29 @@ PROGRAM LaplaceEquation
   !-----------------------------------------------------------------------------------------------------------
 
   !Create the Standard Laplace equations set
-  CALL cmfe_EquationsSet_CreateStart(EQUATIONS_SET_USER_NUMBER,contextUserNumber,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
+  CALL cmfe_EquationsSet_CreateStart(EQUATIONS_SET_USER_NUMBER,CONTEXT_USER_NUMBER,REGION_USER_NUMBER,GEOMETRIC_FIELD_USER_NUMBER, &
     & [CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE, &
     & CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE],EQUATIONS_SET_FIELD_USER_NUMBER,err)
   !Finish creating the equations set
-  CALL cmfe_EquationsSet_CreateFinish(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
+  CALL cmfe_EquationsSet_CreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! DEPENDENT FIELD
   !-----------------------------------------------------------------------------------------------------------
 
   !Create the equations set dependent field variables
-  CALL cmfe_EquationsSet_DependentCreateStart(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
+  CALL cmfe_EquationsSet_DependentCreateStart(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
     & DEPENDENT_FIELD_USER_NUMBER,err)
   !Set the DOFs to be contiguous across components
-  CALL cmfe_Field_DOFOrderTypeSet(contextUserNumber,REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER, &
+  CALL cmfe_Field_DOFOrderTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER, &
     & CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER,err)
-  CALL cmfe_Field_DOFOrderTypeSet(contextUserNumber,REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER, &
+  CALL cmfe_Field_DOFOrderTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER, &
     & CMFE_FIELD_DELUDELN_VARIABLE_TYPE,CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER,err)
   !Finish the equations set dependent field variables
-  CALL cmfe_EquationsSet_DependentCreateFinish(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
+  CALL cmfe_EquationsSet_DependentCreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
 
   !Initialise the field with an initial guess
-  CALL cmfe_Field_ComponentValuesInitialise(contextUserNumber,REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER, &
+  CALL cmfe_Field_ComponentValuesInitialise(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER, &
     & CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,0.5_CMISSRP,err)
 
   !-----------------------------------------------------------------------------------------------------------
@@ -282,141 +283,144 @@ PROGRAM LaplaceEquation
   !-----------------------------------------------------------------------------------------------------------
 
   !Create the equations set equations
-  CALL cmfe_EquationsSet_EquationsCreateStart(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
+  CALL cmfe_EquationsSet_EquationsCreateStart(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
   !Set the equations matrices sparsity type
-  CALL cmfe_Equations_SparsityTypeSet(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
+  CALL cmfe_Equations_SparsityTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
     & CMFE_EQUATIONS_SPARSE_MATRICES,err)
-  !CALL cmfe_Equations_SparsityTypeSet(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
+  !CALL cmfe_Equations_SparsityTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
   !  & CMFE_EQUATIONS_FULL_MATRICES,err)
   !Set the equations set output
-  CALL cmfe_Equations_OutputTypeSet(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
+  CALL cmfe_Equations_OutputTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
     & CMFE_EQUATIONS_NO_OUTPUT,err)
-  !CALL cmfe_Equations_OutputTypeSet(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
+  !CALL cmfe_Equations_OutputTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
   !  & CMFE_EQUATIONS_TIMING_OUTPUT,err)
-  !CALL cmfe_Equations_OutputTypeSet(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
+  !CALL cmfe_Equations_OutputTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
   !  & CMFE_EQUATIONS_MATRIX_OUTPUT,err)
-  !CALL cmfe_Equations_OutputTypeSet(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
+  !CALL cmfe_Equations_OutputTypeSet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER, &
   !  & CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT,err)
   !Finish the equations set equations
-  CALL cmfe_EquationsSet_EquationsCreateFinish(contextUserNumber,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
+  CALL cmfe_EquationsSet_EquationsCreateFinish(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! PROBLEM
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of a problem.
-  CALL cmfe_Problem_CreateStart(PROBLEM_USER_NUMBER,contextUserNumber,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS, &
+  CALL cmfe_Problem_CreateStart(PROBLEM_USER_NUMBER,CONTEXT_USER_NUMBER,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS, &
     & CMFE_PROBLEM_LAPLACE_EQUATION_TYPE,CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE],err)
   !Finish the creation of a problem.
-  CALL cmfe_Problem_CreateFinish(contextUserNumber,PROBLEM_USER_NUMBER,err)
+  CALL cmfe_Problem_CreateFinish(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! CONTROL LOOPS
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of the problem control loop
-  CALL cmfe_Problem_ControlLoopCreateStart(contextUserNumber,PROBLEM_USER_NUMBER,err)
+  CALL cmfe_Problem_ControlLoopCreateStart(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
   !Finish creating the problem control loop
-  CALL cmfe_Problem_ControlLoopCreateFinish(contextUserNumber,PROBLEM_USER_NUMBER,err)
+  CALL cmfe_Problem_ControlLoopCreateFinish(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! SOLVER
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of the problem solvers
-  CALL cmfe_Problem_SolversCreateStart(contextUserNumber,PROBLEM_USER_NUMBER,err)
-  !CALL cmfe_Solver_OutputTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  CALL cmfe_Problem_SolversCreateStart(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
+  !CALL cmfe_Solver_OutputTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_NO_OUTPUT,err)
-  !CALL cmfe_Solver_OutputTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_OutputTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_PROGRESS_OUTPUT,err)
-  !CALL cmfe_Solver_OutputTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_OutputTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_TIMING_OUTPUT,err)
-  !CALL cmfe_Solver_OutputTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_OutputTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_SOLVER_OUTPUT,err)
-  CALL cmfe_Solver_OutputTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  CALL cmfe_Solver_OutputTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
     & CMFE_SOLVER_MATRIX_OUTPUT,err)
   
-  CALL cmfe_Solver_LinearTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  CALL cmfe_Solver_LinearTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
     & CMFE_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE,err)
-  CALL cmfe_Solver_LinearIterativeAbsoluteToleranceSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  CALL cmfe_Solver_LinearIterativeAbsoluteToleranceSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
     & 1.0E-12_CMISSRP,err)
-  CALL cmfe_Solver_LinearIterativeRelativeToleranceSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  CALL cmfe_Solver_LinearIterativeRelativeToleranceSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
     & 1.0E-12_CMISSRP,err)
   
-  !CALL cmfe_Solver_LinearTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_LinearTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,err)
-  !CALL cmfe_Solver_LibraryTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_LibraryTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_MUMPS_LIBRARY,err)
-  !CALL cmfe_Solver_LibraryTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_LibraryTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_LAPACK_LIBRARY,err)
-  !CALL cmfe_Solver_LibraryTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_LibraryTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_SUPERLU_LIBRARY,err)
-  !CALL cmfe_Solver_LibraryTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_Solver_LibraryTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_PASTIX_LIBRARY,err)
   !Finish the creation of the problem solver
-  CALL cmfe_Problem_SolversCreateFinish(contextUserNumber,PROBLEM_USER_NUMBER,err)
+  CALL cmfe_Problem_SolversCreateFinish(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! SOLVER EQUATIONS
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of the problem solver equations
-  CALL cmfe_Problem_SolverEquationsCreateStart(contextUserNumber,PROBLEM_USER_NUMBER,err)
+  CALL cmfe_Problem_SolverEquationsCreateStart(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
   !Set the solver equations sparsity
-  CALL cmfe_SolverEquations_SparsityTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  CALL cmfe_SolverEquations_SparsityTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
     & CMFE_SOLVER_SPARSE_MATRICES,err)
-  !CALL cmfe_SolverEquations_SparsityTypeSet(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  !CALL cmfe_SolverEquations_SparsityTypeSet(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
   !  & CMFE_SOLVER_FULL_MATRICES,err)
   !Add in the equations set
-  CALL cmfe_SolverEquations_EquationsSetAdd(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+  CALL cmfe_SolverEquations_EquationsSetAdd(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
     & REGION_USER_NUMBER,EQUATIONS_SET_USER_NUMBER,equationsSetIndex,err)
   !Finish the creation of the problem solver equations
-  CALL cmfe_Problem_SolverEquationsCreateFinish(contextUserNumber,PROBLEM_USER_NUMBER,err)
+  CALL cmfe_Problem_SolverEquationsCreateFinish(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! BOUNDARY CONDITIONS
   !-----------------------------------------------------------------------------------------------------------
 
   !Start the creation of the equations set boundary conditions
-  CALL cmfe_SolverEquations_BoundaryConditionsCreateStart(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1,err)
+  CALL cmfe_SolverEquations_BoundaryConditionsCreateStart(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1,err)
   !Set the first node to 0.0 and the last node to 1.0
   firstNodeNumber=1
-  CALL cmfe_Nodes_NumberOfNodesGet(contextUserNumber,REGION_USER_NUMBER,lastNodeNumber,err)
-  CALL cmfe_Decomposition_NodeDomainGet(contextUserNumber,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
+  CALL cmfe_Nodes_NumberOfNodesGet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,lastNodeNumber,err)
+  CALL cmfe_Decomposition_NodeDomainGet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
     & firstNodeNumber,1,firstNodeDomain,err)
-  CALL cmfe_Decomposition_NodeDomainGet(contextUserNumber,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
+  CALL cmfe_Decomposition_NodeDomainGet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
     & lastNodeNumber,1,lastNodeDomain,err)
   IF(firstNodeDomain==computationalNodeNumber) THEN
-    CALL cmfe_BoundaryConditions_SetNode(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+    CALL cmfe_BoundaryConditions_SetNode(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
       & REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER,CMFE_FIELD_U_VARIABLE_TYPE,1,1,firstNodeNumber,1, &
       & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,err)
   ENDIF
   IF(lastNodeDomain==computationalNodeNumber) THEN
-    CALL cmfe_BoundaryConditions_SetNode(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
+    CALL cmfe_BoundaryConditions_SetNode(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1, &
       & REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER,CMFE_FIELD_U_VARIABLE_TYPE,1,1,lastNodeNumber,1, &
       & CMFE_BOUNDARY_CONDITION_FIXED,1.0_CMISSRP,err)
   ENDIF
   !Finish the creation of the equations set boundary conditions
-  CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(contextUserNumber,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1,err)
+  CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,CMFE_CONTROL_LOOP_NODE,1,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! SOLVE
   !-----------------------------------------------------------------------------------------------------------
 
   !Solve the problem
-  CALL cmfe_Problem_Solve(contextUserNumber,PROBLEM_USER_NUMBER,err)
+  CALL cmfe_Problem_Solve(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,err)
 
   !-----------------------------------------------------------------------------------------------------------
   ! OUTPUT
   !-----------------------------------------------------------------------------------------------------------
 
   !Export results
-  CALL cmfe_Fields_NodesExport(contextUserNumber,REGION_USER_NUMBER,"LaplaceEquation","FORTRAN",err)
-  CALL cmfe_Fields_ElementsExport(contextUserNumber,REGION_USER_NUMBER,"LaplaceEquation","FORTRAN",err)
+  CALL cmfe_Fields_NodesExport(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,"LaplaceEquation","FORTRAN",err)
+  CALL cmfe_Fields_ElementsExport(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,"LaplaceEquation","FORTRAN",err)
 
+  !Destroy the context
+  CALL cmfe_Context_Destroy(CONTEXT_USER_NUMBER,err)
   !Finialise OpenCMISS
-  CALL cmfe_Finalise(contextUserNumber,err)
-  WRITE(*,'(A)') "Program successfully completed."
+  CALL cmfe_Finalise(err)
+  
+  WRITE(*,'("Program successfully completed.")')
   STOP
 
 CONTAINS

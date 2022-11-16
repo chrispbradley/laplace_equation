@@ -15,18 +15,19 @@
 #define WIDTH 2.0
 #define LENGTH 3.0
 
-#define COORDINATE_SYSTEM_USER_NUMBER 1
-#define REGION_USER_NUMBER 2
-#define BASIS_USER_NUMBER 3
-#define GENERATED_MESH_USER_NUMBER 4
-#define MESH_USER_NUMBER 5
-#define DECOMPOSITION_USER_NUMBER 6
-#define DECOMPOSER_USER_NUMBER 7
-#define GEOMETRIC_FIELD_USER_NUMBER 8
-#define EQUATIONS_SET_USER_NUMBER 9
-#define EQUATIONS_SET_FIELD_USER_NUMBER 10
-#define DEPENDENT_FIELD_USER_NUMBER 11
-#define PROBLEM_USER_NUMBER 12
+#define CONTEXT_USER_NUMBER 1
+#define COORDINATE_SYSTEM_USER_NUMBER 2
+#define REGION_USER_NUMBER 3
+#define BASIS_USER_NUMBER 4
+#define GENERATED_MESH_USER_NUMBER 5
+#define MESH_USER_NUMBER 6
+#define DECOMPOSITION_USER_NUMBER 7
+#define DECOMPOSER_USER_NUMBER 8
+#define GEOMETRIC_FIELD_USER_NUMBER 9
+#define EQUATIONS_SET_USER_NUMBER 10
+#define EQUATIONS_SET_FIELD_USER_NUMBER 11
+#define DEPENDENT_FIELD_USER_NUMBER 12
+#define PROBLEM_USER_NUMBER 13
 
 #define MAX_COORDINATES 3
 
@@ -107,18 +108,20 @@ int main(int argc, char *argv[])
       interpolationType = CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION;
    }
 
+  err = cmfe_Initialise();
+  CHECK_ERROR("Initialising OpenCMISS");
+  err = cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR);
+  sprintf(filename,"%s_%dx%dx%d_%d","Laplace",numberOfGlobalXElements,numberOfGlobalYElements,numberOfGlobalZElements,interpolationType);
+  err = cmfe_OutputSetOn(STRING_SIZE,filename);
+
   err = cmfe_Context_Initialise(&context);
   CHECK_ERROR("Initialising context");
-  err = cmfe_Initialise(context);
-  CHECK_ERROR("Initialising OpenCMISS-Iron");
-  err = cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR);
+  err = cmfe_Context_Create(CONTEXT_USER_NUMBER,context);
+  CHECK_ERROR("Creating context");
 
   err = cmfe_Region_Initialise(&worldRegion);
   err = cmfe_Context_WorldRegionGet(context,worldRegion);
   
-  sprintf(filename,"%s_%dx%dx%d_%d","Laplace",numberOfGlobalXElements,numberOfGlobalYElements,numberOfGlobalZElements,interpolationType);
-
-  err = cmfe_OutputSetOn(STRING_SIZE,filename);
 
   /* Get the computational nodes information */
   err = cmfe_ComputationEnvironment_Initialise(&computationEnvironment);
@@ -377,8 +380,10 @@ int main(int argc, char *argv[])
   err = cmfe_Fields_ElementsExport(fields,STRING_SIZE,filename,STRING_SIZE,format);
   err = cmfe_Fields_Finalise(&fields);
 
+  /* Destroy the context */
+  err = cmfe_Context_Destroy(context);
   /* Finalise OpenCMISS */
-  err = cmfe_Finalise(context);
+  err = cmfe_Finalise();
 
   return err;
 }

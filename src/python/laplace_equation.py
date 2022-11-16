@@ -13,7 +13,8 @@ height = 1.0
 width = 1.0
 length = 1.0
 
-(coordinateSystemUserNumber,
+(contextUserNumber,
+    coordinateSystemUserNumber,
     regionUserNumber,
     basisUserNumber,
     generatedMeshUserNumber,
@@ -24,7 +25,7 @@ length = 1.0
     equationsSetFieldUserNumber,
     dependentFieldUserNumber,
     equationsSetUserNumber,
-    problemUserNumber) = range(1,13)
+    problemUserNumber) = range(1,14)
 
 numberGlobalXElements = 1
 numberGlobalYElements = 3
@@ -34,14 +35,17 @@ numberGlobalZElements = 1
 # DIAGNOSTICS AND COMPUTATIONAL NODE INFORMATION
 #-----------------------------------------------------------------------------------------------------------
 
+context = iron.Context()
+context.Create(contextUserNumber)
+
 worldRegion = iron.Region()
-iron.Context.WorldRegionGet(worldRegion)
+context.WorldRegionGet(worldRegion)
 
 iron.DiagnosticsSetOn(iron.DiagnosticTypes.IN,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate"])
 
 # Get the computational nodes information
 computationEnvironment = iron.ComputationEnvironment()
-iron.Context.ComputationEnvironmentGet(computationEnvironment)
+context.ComputationEnvironmentGet(computationEnvironment)
 
 worldWorkGroup = iron.WorkGroup()
 computationEnvironment.WorldWorkGroupGet(worldWorkGroup)
@@ -53,7 +57,7 @@ computationalNodeNumber = worldWorkGroup.GroupNodeNumberGet()
 #-----------------------------------------------------------------------------------------------------------
 
 coordinateSystem = iron.CoordinateSystem()
-coordinateSystem.CreateStart(coordinateSystemUserNumber,iron.Context)
+coordinateSystem.CreateStart(coordinateSystemUserNumber,context)
 coordinateSystem.dimension = 3
 coordinateSystem.CreateFinish()
 
@@ -71,7 +75,7 @@ region.CreateFinish()
 #-----------------------------------------------------------------------------------------------------------
 
 basis = iron.Basis()
-basis.CreateStart(basisUserNumber,iron.Context)
+basis.CreateStart(basisUserNumber,context)
 basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
 basis.numberOfXi = 3
 basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*3
@@ -170,7 +174,7 @@ problem = iron.Problem()
 problemSpecification = [iron.ProblemClasses.CLASSICAL_FIELD,
         iron.ProblemTypes.LAPLACE_EQUATION,
         iron.ProblemSubtypes.STANDARD_LAPLACE]
-problem.CreateStart(problemUserNumber, iron.Context, problemSpecification)
+problem.CreateStart(problemUserNumber, context, problemSpecification)
 problem.CreateFinish()
 
 # Create control loops
@@ -253,5 +257,7 @@ fields.NodesExport("LaplaceEquation","FORTRAN")
 fields.ElementsExport("LaplaceEquation","FORTRAN")
 fields.Finalise()
 
-# Finalise OpenCMISS-Iron
-iron.Finalise(iron.Context)
+# Destroy the context
+context.Destroy()
+# Finalise OpenCMISS
+iron.Finalise()

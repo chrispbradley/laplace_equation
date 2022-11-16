@@ -1,6 +1,6 @@
 set(ExampleName "laplace_equation")
 
-cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
 if (DEFINED OpenCMISSLibs_DIR)
   set(CMAKE_PROJECT_INCLUDE_BEFORE ${OpenCMISSLibs_DIR}/opencmisslibs-preconfig.cmake)
