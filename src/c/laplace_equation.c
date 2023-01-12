@@ -31,23 +31,6 @@
 
 #define MAX_COORDINATES 3
 
-#define CHECK_ERROR(S) \
-  if(err != CMFE_NO_ERROR) { \
-    if(err == CMFE_ERROR_CONVERTING_POINTER) { \
-      fprintf(stderr,"Error: %s: Error converting pointer.\n",(S)); \
-    } \
-    else if(err == CMFE_POINTER_IS_NULL) { \
-      fprintf(stderr,"Error: %s: Pointer is null.\n",(S)); \
-    } \
-    else if(err == CMFE_POINTER_NOT_NULL) { \
-      fprintf(stderr,"Error: %s: Pointer is not null.\n",(S)); \
-    } \
-    else if(err == CMFE_COULD_NOT_ALLOCATE_POINTER) { \
-      fprintf(stderr,"Error: %s: Could not allocate pointer.\n",(S)); \
-    } \
-    exit(err); \
-  }
-
 int main(int argc, char *argv[])
 {
   cmfe_BasisType basis = (cmfe_BasisType)NULL;
@@ -109,15 +92,15 @@ int main(int argc, char *argv[])
    }
 
   err = cmfe_Initialise();
-  CHECK_ERROR("Initialising OpenCMISS");
+  OPENCMISS_CHECK_ERROR(err,"Initialising OpenCMISS");
   err = cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR);
   sprintf(filename,"%s_%dx%dx%d_%d","Laplace",numberOfGlobalXElements,numberOfGlobalYElements,numberOfGlobalZElements,interpolationType);
   err = cmfe_OutputSetOn(STRING_SIZE,filename);
 
   err = cmfe_Context_Initialise(&context);
-  CHECK_ERROR("Initialising context");
+  OPENCMISS_CHECK_ERROR(err,"Initialising context");
   err = cmfe_Context_Create(CONTEXT_USER_NUMBER,context);
-  CHECK_ERROR("Creating context");
+  OPENCMISS_CHECK_ERROR(err,"Creating context");
 
   err = cmfe_Region_Initialise(&worldRegion);
   err = cmfe_Context_WorldRegionGet(context,worldRegion);
@@ -177,7 +160,7 @@ int main(int argc, char *argv[])
       err = cmfe_Basis_TypeSet(basis,CMFE_BASIS_SIMPLEX_TYPE);
       break;
     default:
-      CHECK_ERROR("Invalid interpolation type");
+      OPENCMISS_CHECK_ERROR(CMFE_FORCE_ERROR,"Invalid interpolation type");
     }
   switch(interpolationType)
     {
