@@ -1,47 +1,78 @@
 #!/usr/bin/env python
 
+import sys
+
 # Intialise OpenCMISS-Iron
 from opencmiss.iron import iron
-
-#parameters.parse()
 
 #-----------------------------------------------------------------------------------------------------------
 # SET PROBLEM PARAMETERS
 #-----------------------------------------------------------------------------------------------------------
 
-height = 1.0
-width = 1.0
-length = 1.0
+HEIGHT = 1.0
+WIDTH = 1.0
+LENGTH = 1.0
 
-(contextUserNumber,
-    coordinateSystemUserNumber,
-    regionUserNumber,
-    basisUserNumber,
-    generatedMeshUserNumber,
-    meshUserNumber,
-    decompositionUserNumber,
-    decomposerUserNumber,
-    geometricFieldUserNumber,
-    equationsSetFieldUserNumber,
-    dependentFieldUserNumber,
-    equationsSetUserNumber,
-    problemUserNumber) = range(1,14)
+(CONTEXT_USER_NUMBER,
+ COORDINATE_SYSTEM_USER_NUMBER,
+ REGION_USER_NUMBER,
+ BASIS_USER_NUMBER,
+ GENERATED_MESH_USER_NUMBER,
+ MESH_USER_NUMBER,
+ DECOMPOSITION_USER_NUMBER,
+ DECOMPOSER_USER_NUMBER,
+ GEOMETRIC_FIELD_USER_NUMBER,
+ EQUATIONS_SET_FIELD_USER_NUMBER,
+ DEPENDENT_FIELD_USER_NUMBER,
+ EQUATIONS_SET_USER_NUMBER,
+ PROBLEM_USER_NUMBER) = range(1,14)
 
-numberGlobalXElements = 1
-numberGlobalYElements = 3
-numberGlobalZElements = 1
+NUMBER_OF_GAUSS_XI = 2
+
+numberOfGlobalXElements = 1
+numberOfGlobalYElements = 3
+numberOfGlobalZElements = 1
+
+# Override with command line arguments if need be
+if len(sys.argv) > 1:
+    if len(sys.argv) > 4:
+        sys.exit('ERROR: too many arguments- currently only accepting up to 3 options: numberOfGlobalXElements numberOfGlobalYElements numberOfGlobalZElements')
+        numberOfGlobalXElementsnumberOfGlobalXElements = int(sys.argv[1])
+    if len(sys.argv) > 2:
+        numberOfGlobalYElements = int(sys.argv[2])
+    if len(sys.argv) > 3:
+        numberOfGlobalZElements = int(sys.argv[3])
+
+if (numberOfGlobalZElements >= 0):
+    if (numberOfGlobalYElements >= 0):
+        if (numberOfGlobalXElements >= 0):
+            if (numberOfGlobalZElements == 0):
+                if(numberOfGlobalYElements == 0):
+                    numberOfDimensions = 1
+                else:
+                    numberOfDimensions = 2
+            else:
+                numberOfDimensions = 3
+        else:
+            sys.exit('ERROR: number of global X elements must be greater than 0.')
+    else:
+        sys.exit('ERROR: number of global Y elements must be greater than 0.')
+else:
+    sys.exit('ERROR: number of global Z elements must be greater than 0.')
 
 #-----------------------------------------------------------------------------------------------------------
 # DIAGNOSTICS AND COMPUTATIONAL NODE INFORMATION
 #-----------------------------------------------------------------------------------------------------------
 
+# Create a context for the example
 context = iron.Context()
-context.Create(contextUserNumber)
+context.Create(CONTEXT_USER_NUMBER)
 
+# Get the world region
 worldRegion = iron.Region()
 context.WorldRegionGet(worldRegion)
 
-iron.DiagnosticsSetOn(iron.DiagnosticTypes.IN,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate","Test"])
+#iron.DiagnosticsSetOn(iron.DiagnosticTypes.IN,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate"])
 
 # Get the computational nodes information
 computationEnvironment = iron.ComputationEnvironment()
@@ -57,17 +88,17 @@ computationalNodeNumber = worldWorkGroup.GroupNodeNumberGet()
 #-----------------------------------------------------------------------------------------------------------
 
 coordinateSystem = iron.CoordinateSystem()
-coordinateSystem.CreateStart(coordinateSystemUserNumber,context)
-coordinateSystem.dimension = 3
+coordinateSystem.CreateStart(COORDINATE_SYSTEM_USER_NUMBER,context)
+coordinateSystem.DimensionSet(numberOfDimensions)
 coordinateSystem.CreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
 #REGION
 #-----------------------------------------------------------------------------------------------------------
 region = iron.Region()
-region.CreateStart(regionUserNumber,worldRegion)
-region.label = "LaplaceEquation"
-region.coordinateSystem = coordinateSystem
+region.CreateStart(REGION_USER_NUMBER,worldRegion)
+region.LabelSet("LaplaceEquation")
+region.CoordinateSystemSet(coordinateSystem)
 region.CreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
@@ -75,32 +106,40 @@ region.CreateFinish()
 #-----------------------------------------------------------------------------------------------------------
 
 basis = iron.Basis()
-basis.CreateStart(basisUserNumber,context)
-basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
-basis.numberOfXi = 3
-basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*3
-basis.quadratureNumberOfGaussXi = [2]*3
+basis.CreateStart(BASIS_USER_NUMBER,context)
+basis.TypeSet(iron.BasisTypes.LAGRANGE_HERMITE_TP)
+basis.NumberOfXiSet(numberOfDimensions)
+basis.InterpolationXiSet([iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*numberOfDimensions)
+basis.QuadratureNumberOfGaussXiSet([NUMBER_OF_GAUSS_XI]*numberOfDimensions)
 basis.CreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
 #MESH
 #-----------------------------------------------------------------------------------------------------------
 generatedMesh = iron.GeneratedMesh()
-generatedMesh.CreateStart(generatedMeshUserNumber,region)
-generatedMesh.type = iron.GeneratedMeshTypes.REGULAR
-generatedMesh.basis = [basis]
-generatedMesh.extent = [width,height,length]
-generatedMesh.numberOfElements = [numberGlobalXElements,numberGlobalYElements,numberGlobalZElements]
-
+generatedMesh.CreateStart(GENERATED_MESH_USER_NUMBER,region)
+generatedMesh.TypeSet(iron.GeneratedMeshTypes.REGULAR)
+generatedMesh.BasisSet([basis])
+if (numberOfDimensions == 1):
+    generatedMesh.ExtentSet([WIDTH])
+    generatedMesh.NumberOfElementsSet([numberOfGlobalXElements])
+elif (numberOfDimensions == 2):
+    generatedMesh.ExtentSet([WIDTH,HEIGHT])
+    generatedMesh.NumberOfElementsSet([numberOfGlobalXElements,numberOfGlobalYElements])
+elif (numberOfDimensions == 3):
+    generatedMesh.ExtentSet([WIDTH,HEIGHT,LENGTH])
+    generatedMesh.NumberOfElementsSet([numberOfGlobalXElements,numberOfGlobalYElements,numberOfGlobalZElements])
+else:
+    sys.exit('ERROR: invalid number of dimensions.')
 mesh = iron.Mesh()
-generatedMesh.CreateFinish(meshUserNumber,mesh)
+generatedMesh.CreateFinish(MESH_USER_NUMBER,mesh)
 
 #-----------------------------------------------------------------------------------------------------------
 #MESH DECOMPOSITION
 #-----------------------------------------------------------------------------------------------------------
 
 decomposition = iron.Decomposition()
-decomposition.CreateStart(decompositionUserNumber,mesh)
+decomposition.CreateStart(DECOMPOSITION_USER_NUMBER,mesh)
 decomposition.CreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
@@ -108,7 +147,7 @@ decomposition.CreateFinish()
 #-----------------------------------------------------------------------------------------------------------
 
 decomposer = iron.Decomposer()
-decomposer.CreateStart(decomposerUserNumber,worldRegion,worldWorkGroup)
+decomposer.CreateStart(DECOMPOSER_USER_NUMBER,worldRegion,worldWorkGroup)
 decompositionIndex = decomposer.DecompositionAdd(decomposition)
 decomposer.CreateFinish()
 
@@ -117,11 +156,10 @@ decomposer.CreateFinish()
 #-----------------------------------------------------------------------------------------------------------
 
 geometricField = iron.Field()
-geometricField.CreateStart(geometricFieldUserNumber,region)
-geometricField.decomposition = decomposition
-geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,1,1)
-geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,2,1)
-geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,3,1)
+geometricField.CreateStart(GEOMETRIC_FIELD_USER_NUMBER,region)
+geometricField.DecompositionSet(decomposition)
+for dimensionIdx in range(1,numberOfDimensions+1):
+    geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,dimensionIdx,1)
 geometricField.CreateFinish()
 
 # Set geometry from the generated mesh
@@ -137,8 +175,8 @@ equationsSet = iron.EquationsSet()
 equationsSetSpecification = [iron.EquationsSetClasses.CLASSICAL_FIELD,
         iron.EquationsSetTypes.LAPLACE_EQUATION,
         iron.EquationsSetSubtypes.STANDARD_LAPLACE]
-equationsSet.CreateStart(equationsSetUserNumber,region,geometricField,
-        equationsSetSpecification,equationsSetFieldUserNumber,equationsSetField)
+equationsSet.CreateStart(EQUATIONS_SET_USER_NUMBER,region,geometricField,
+        equationsSetSpecification,EQUATIONS_SET_FIELD_USER_NUMBER,equationsSetField)
 equationsSet.CreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
@@ -146,7 +184,7 @@ equationsSet.CreateFinish()
 #-----------------------------------------------------------------------------------------------------------
 
 dependentField = iron.Field()
-equationsSet.DependentCreateStart(dependentFieldUserNumber,dependentField)
+equationsSet.DependentCreateStart(DEPENDENT_FIELD_USER_NUMBER,dependentField)
 dependentField.DOFOrderTypeSet(iron.FieldVariableTypes.U,iron.FieldDOFOrderTypes.SEPARATED)
 dependentField.DOFOrderTypeSet(iron.FieldVariableTypes.DELUDELN,iron.FieldDOFOrderTypes.SEPARATED)
 equationsSet.DependentCreateFinish()
@@ -160,10 +198,10 @@ dependentField.ComponentValuesInitialiseDP(iron.FieldVariableTypes.U,iron.FieldP
 
 equations = iron.Equations()
 equationsSet.EquationsCreateStart(equations)
-equations.sparsityType = iron.EquationsSparsityTypes.SPARSE
-equations.outputType = iron.EquationsOutputTypes.NONE
-equations.outputType = iron.EquationsOutputTypes.MATRIX
-equations.outputType = iron.EquationsOutputTypes.ELEMENT_MATRIX
+equations.SparsityTypeSet(iron.EquationsSparsityTypes.SPARSE)
+#equations.OutputTypeSet(iron.EquationsOutputTypes.NONE)
+#equations.OutputTypeSet(iron.EquationsOutputTypes.MATRIX)
+equations.OutputTypeSet(iron.EquationsOutputTypes.ELEMENT_MATRIX)
 equationsSet.EquationsCreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
@@ -174,7 +212,7 @@ problem = iron.Problem()
 problemSpecification = [iron.ProblemClasses.CLASSICAL_FIELD,
         iron.ProblemTypes.LAPLACE_EQUATION,
         iron.ProblemSubtypes.STANDARD_LAPLACE]
-problem.CreateStart(problemUserNumber, context, problemSpecification)
+problem.CreateStart(PROBLEM_USER_NUMBER,context,problemSpecification)
 problem.CreateFinish()
 
 # Create control loops
@@ -189,11 +227,11 @@ problem.ControlLoopCreateFinish()
 solver = iron.Solver()
 problem.SolversCreateStart()
 problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,solver)
-solver.outputType = iron.SolverOutputTypes.SOLVER
-solver.outputType = iron.SolverOutputTypes.MATRIX
-solver.linearType = iron.LinearSolverTypes.ITERATIVE
-solver.linearIterativeAbsoluteTolerance = 1.0E-12
-solver.linearIterativeRelativeTolerance = 1.0E-12
+#solver.OutputTypeSet(iron.SolverOutputTypes.SOLVER)
+solver.OutputTypeSet(iron.SolverOutputTypes.MATRIX)
+solver.LinearTypeSet(iron.LinearSolverTypes.ITERATIVE)
+solver.LinearIterativeAbsoluteToleranceSet(1.0E-12)
+solver.LinearIterativeRelativeToleranceSet(1.0E-12)
 problem.SolversCreateFinish()
 
 #-----------------------------------------------------------------------------------------------------------
@@ -206,7 +244,7 @@ solverEquations = iron.SolverEquations()
 problem.SolverEquationsCreateStart()
 problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,solver)
 solver.SolverEquationsGet(solverEquations)
-solverEquations.sparsityType = iron.SolverEquationsSparsityTypes.SPARSE
+solverEquations.SparsityTypeSet(iron.SolverEquationsSparsityTypes.SPARSE)
 equationsSetIndex = solverEquations.EquationsSetAdd(equationsSet)
 problem.SolverEquationsCreateFinish()
 
