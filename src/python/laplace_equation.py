@@ -41,7 +41,7 @@ context.Create(contextUserNumber)
 worldRegion = iron.Region()
 context.WorldRegionGet(worldRegion)
 
-iron.DiagnosticsSetOn(iron.DiagnosticTypes.IN,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate"])
+iron.DiagnosticsSetOn(iron.DiagnosticTypes.IN,[1,2,3,4,5],"Diagnostics",["Laplace_FiniteElementCalculate","Test"])
 
 # Get the computational nodes information
 computationEnvironment = iron.ComputationEnvironment()
