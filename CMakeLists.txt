@@ -10,7 +10,7 @@ endif()
 
 project(${ExampleName} VERSION 1.0 LANGUAGES C Fortran)
 
-find_package(libOpenCMISS 1.0.0
+find_package(libOpenCMISS 1.0.0 REQUIRED
   COMPONENTS Fortran C
 )
 

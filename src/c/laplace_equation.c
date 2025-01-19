@@ -336,8 +336,8 @@ int main(int argc, char *argv[])
     {
       lastNodeNumber = (numberOfGlobalXElements+1)*(numberOfGlobalYElements+1)*(numberOfGlobalZElements+1);
     }
-  err = OC_Decomposition_NodeDomainGet(decomposition,firstNodeNumber,1,&firstNodeDomain);
-  err = OC_Decomposition_NodeDomainGet(decomposition,lastNodeNumber,1,&lastNodeDomain);
+  err = OC_Decomposition_NodeDomainGet(decomposition,1,firstNodeNumber,&firstNodeDomain);
+  err = OC_Decomposition_NodeDomainGet(decomposition,1,lastNodeNumber,&lastNodeDomain);
   if(firstNodeDomain == computationalNodeNumber)
     {
       err = OC_BoundaryConditions_SetNode(boundaryConditions,dependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,firstNodeNumber,1, \

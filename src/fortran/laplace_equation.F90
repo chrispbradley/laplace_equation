@@ -35,7 +35,7 @@ PROGRAM LaplaceEquation
     & interpolationType,numberOfGaussXi
   CHARACTER(LEN=255) :: commandArgument,filename
 
-  !CMISS variables
+  !OpenCMISS variables
   TYPE(OC_BasisType) :: basis
   TYPE(OC_BoundaryConditionsType) :: boundaryConditions
   TYPE(OC_ComputationEnvironmentType) :: computationEnvironment
@@ -66,6 +66,8 @@ PROGRAM LaplaceEquation
   !-----------------------------------------------------------------------------------------------------------
   ! PROBLEM CONTROL PANEL
   !-----------------------------------------------------------------------------------------------------------
+
+  WRITE(*,'("Getting to here...")')
 
   numberOfArguments = COMMAND_ARGUMENT_COUNT()
   IF(numberOfArguments >= 4) THEN
@@ -111,6 +113,7 @@ PROGRAM LaplaceEquation
   CALL OC_Context_WorldRegionGet(context,worldRegion,err)
   CALL OC_Context_RandomSeedsSet(context,9999,err)
 
+  
   !Get the computational nodes information
   CALL OC_ComputationEnvironment_Initialise(computationEnvironment,err)
   CALL OC_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
@@ -378,8 +381,8 @@ PROGRAM LaplaceEquation
   CALL OC_Nodes_Initialise(nodes,err)
   CALL OC_Region_NodesGet(region,nodes,err)
   CALL OC_Nodes_NumberOfNodesGet(nodes,lastNodeNumber,err)
-  CALL OC_Decomposition_NodeDomainGet(decomposition,firstNodeNumber,1,firstNodeDomain,err)
-  CALL OC_Decomposition_NodeDomainGet(decomposition,lastNodeNumber,1,lastNodeDomain,err)
+  CALL OC_Decomposition_NodeDomainGet(decomposition,1,firstNodeNumber,firstNodeDomain,err)
+  CALL OC_Decomposition_NodeDomainGet(decomposition,1,lastNodeNumber,lastNodeDomain,err)
   IF(firstNodeDomain==computationalNodeNumber) THEN
     CALL OC_BoundaryConditions_SetNode(boundaryConditions,dependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,firstNodeNumber,1, &
       & OC_BOUNDARY_CONDITION_FIXED,0.0_OC_RP,err)

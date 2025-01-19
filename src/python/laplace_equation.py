@@ -260,8 +260,8 @@ firstNodeNumber=1
 nodes = oc.Nodes()
 region.NodesGet(nodes)
 lastNodeNumber = nodes.numberOfNodes
-firstNodeDomain = decomposition.NodeDomainGet(firstNodeNumber,1)
-lastNodeDomain = decomposition.NodeDomainGet(lastNodeNumber,1)
+firstNodeDomain = decomposition.NodeDomainGet(1,firstNodeNumber)
+lastNodeDomain = decomposition.NodeDomainGet(1,lastNodeNumber)
 if firstNodeDomain == computationalNodeNumber:
     boundaryConditions.SetNode(dependentField,oc.FieldVariableTypes.U,1,1,firstNodeNumber,1,oc.BoundaryConditionsTypes.FIXED,0.0)
 if lastNodeDomain == computationalNodeNumber:

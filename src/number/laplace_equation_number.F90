@@ -383,9 +383,9 @@ PROGRAM LaplaceEquation
   firstNodeNumber=1
   CALL OC_Nodes_NumberOfNodesGet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,lastNodeNumber,err)
   CALL OC_Decomposition_NodeDomainGet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
-    & firstNodeNumber,1,firstNodeDomain,err)
+    & 1,firstNodeNumber,firstNodeDomain,err)
   CALL OC_Decomposition_NodeDomainGet(CONTEXT_USER_NUMBER,REGION_USER_NUMBER,MESH_USER_NUMBER,DECOMPOSITION_USER_NUMBER, &
-    & lastNodeNumber,1,lastNodeDomain,err)
+    & 1,lastNodeNumber,lastNodeDomain,err)
   IF(firstNodeDomain==computationalNodeNumber) THEN
     CALL OC_BoundaryConditions_SetNode(CONTEXT_USER_NUMBER,PROBLEM_USER_NUMBER,OC_CONTROL_LOOP_NODE,1, &
       & REGION_USER_NUMBER,DEPENDENT_FIELD_USER_NUMBER,OC_FIELD_U_VARIABLE_TYPE,1,1,firstNodeNumber,1, &
